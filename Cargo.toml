@@ -6,4 +6,7 @@ authors = ["Luke Hinds <lukehinds@gmail.com>"]
 [lib]
 crate-type = ["staticlib"]
 
+[profile.release]
+panic = "abort"
+
 [dependencies]
