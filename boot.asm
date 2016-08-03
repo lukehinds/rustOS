@@ -17,3 +17,15 @@ start:
     mov word [0xb8016], 0x0264 ; d
     mov word [0xb8018], 0x0221 ; !
     hlt
+
+; bss = ''block started by symbol'
+section .bss
+
+align 4096
+
+p4_table:
+    resb 4096
+p3_table:
+    resb 4096
+p2_table:
+    resb 4096
