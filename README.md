@@ -7,6 +7,5 @@ Requires nightly build:
 
 ```
 rustup update nightly-2016-05-26
-
 rustup override add nightly-2016-05-26
 ```
