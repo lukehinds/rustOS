@@ -1,5 +1,5 @@
 Rust OS
-~~~~~~~
+-------
 
 Complete OS (inc Kernel), built with just Rust and Assembly
 
