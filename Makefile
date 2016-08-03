@@ -1,30 +1,40 @@
-default: run
+default: build
+
+build: target/kernel.bin
 
 .PHONY: clean
 
-multiboot_header.o: multiboot_header.asm
-		nasm -f elf64 multiboot_header.asm
+target/multiboot_header.o: src/asm/multiboot_header.asm
+		mkdir -p target
+		nasm -f elf64 src/asm/multiboot_header.asm -o target/multiboot_header.o
 
-boot.o: boot.asm
-		nasm -f elf64 boot.asm
+target/boot.o: src/asm/boot.asm
+		mkdir -p target
+		nasm -f elf64 src/asm/boot.asm -o target/boot.o
 
-kernel.bin: multiboot_header.o boot.o linker.ld
-		ld -n -o kernel.bin -T linker.ld multiboot_header.o boot.o
+target/kernel.bin: target/multiboot_header.o target/boot.o src/asm/linker.ld cargo
+		ld -n -o target/kernel.bin -T src/asm/linker.ld target/multiboot_header.o target/boot.o target/x86_64-unknown-rust_os-gnu/release/librust_os.a
 
-os.iso: kernel.bin grub.cfg
-		mkdir -p isofiles/boot/grub
-		cp grub.cfg isofiles/boot/grub
-		cp kernel.bin isofiles/boot/
-		grub2-mkrescue -o os.iso isofiles
+target/os.iso: target/kernel.bin src/asm/grub.cfg
+		mkdir -p target/isofiles/boot/grub
+		cp src/asm/grub.cfg target/isofiles/boot/grub
+		cp target/kernel.bin target/isofiles/boot/
+		grub2-mkrescue -o target/os.iso target/isofiles
 
-build: os.iso
+target/libcore:
+		git clone http://github.com/intermezzos/libcore target/libcore
+		cd target/libcore && git reset --hard 02e41cd5b925a1c878961042ecfb00470c68296b
 
-run: os.iso
-		qemu-system-x86_64 -cdrom os.iso
+target/libcore/target/x86_64-unknown-rust_os-gnu/libcore.rlib: target/libcore
+		cp x86_64-unknown-rust_os-gnu.json target/libcore
+		cd target/libcore && cargo build --release --features disable_float --target=x86_64-unknown-rust_os-gnu.json
+
+cargo: target/libcore/target/x86_64-unknown-rust_os-gnu/libcore.rlib
+		RUSTFLAGS="-L target/libcore/target/x86_64-unknown-rust_os-gnu/release" cargo build --release --target x86_64-unknown-rust_os-gnu.json
+
+
+run: target/os.iso
+		qemu-system-x86_64 -cdrom target/os.iso
 
 clean:
-		rm -f multiboot_header.o
-		rm -f boot.o
-		rm -f kernel.bin
-		rm -rf isofiles
-		rm -f os.iso
+		cargo clean
